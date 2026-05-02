@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Wochenplan">
+<meta name="theme-color" content="#111827">
+<title>Wochenplan</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F4F2ED;--surface:#FFF;--header:#111827;
+  --text:#111827;--text2:#6B7280;--text3:#9CA3AF;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --r:10px;--rsm:6px;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+  --cw:#DBEAFE;--tw:#1E3A8A;--cl:#FCE7F3;--tl:#831843;
+  --ch:#EDE9FE;--th:#4C1D95;--cs:#D1FAE5;--ts:#064E3B;
+  --cb:#DCFCE7;--tb:#14532D;--ct:#FEF3C7;--tt:#78350F;
+  --co:#E0E7FF;--to:#312E81;--cp:#FEE2E2;--tp:#7F1D1D;
+  --chm:#FEF9C3;--thm:#713F12;--ce:#F3F4F6;--te:#1F2937;
+  --cpa:#FFF1F2;--tpa:#881337;--cr:#F9FAFB;--tr:#374151;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text)}
+.hdr{background:var(--header);color:#F9FAFB;position:fixed;top:0;left:0;right:0;z-index:100;padding-top:env(safe-area-inset-top,0px)}
+.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px 8px}
+.hdr-left h1{font-size:17px;font-weight:600;letter-spacing:-.3px}
+.hdr-meta{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.6}
+.hdr-badge{display:inline-block;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:500;margin-right:3px}
+.hdr-badge.frueh{background:rgba(59,130,246,.35);color:#BAD8FF}
+.hdr-badge.spaet{background:rgba(168,85,247,.35);color:#E0BBFF}
+.hdr-icons{display:flex;gap:8px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sync-dot{width:8px;height:8px;border-radius:50%;position:absolute;bottom:2px;right:2px;border:1.5px solid var(--header)}
+.icon-btn{position:relative}
+.toggles{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.toggles::-webkit-scrollbar{display:none}
+.tog{flex-shrink:0;font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-family:var(--font)}
+.tog.on{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)}
+.tog-sep{flex-shrink:0;width:1px;background:rgba(255,255,255,.15);margin:5px 2px}
+.main{position:fixed;top:0;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.main-inner{padding-bottom:80px}
+.days-hdr{display:flex;background:var(--header);position:sticky;z-index:50;border-bottom:1px solid rgba(255,255,255,.06);padding-left:48px}
+.dhcol{flex:0 0 calc((100vw - 48px)/7);text-align:center;padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.dhcol .dn{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.4);font-weight:500}
+.dhcol .dd{font-size:14px;font-weight:600;color:rgba(255,255,255,.7);line-height:1;padding:3px 0 4px}
+.dhcol.today .dd{background:#3B82F6;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.grid{display:flex}
+.tcol{flex:0 0 48px;border-right:1px solid var(--border2);background:var(--bg);position:sticky;left:0;z-index:10}
+.tlabel{font-size:9px;color:var(--text3);padding:6px 5px 0 0;text-align:right;border-top:1px solid var(--border)}
+.dgrid{flex:1;display:flex}
+.dcol{flex:0 0 calc((100vw - 48px)/7);border-right:1px solid var(--border)}
+.dcol:last-child{border-right:none}
+.slot{border-top:1px solid var(--border);padding:2px 2px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.slot:active{background:rgba(0,0,0,.03)}
+.ev{border-radius:var(--rsm);padding:3px 4px;font-size:9px;font-weight:500;line-height:1.35;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.ev:active{opacity:.7}
+.ev-t{font-weight:600;font-size:9px}
+.ev-l{font-size:8px;opacity:.65;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-work{background:var(--cw);color:var(--tw)}.ev-lang{background:var(--cl);color:var(--tl)}
+.ev-hiit{background:var(--ch);color:var(--th)}.ev-swim{background:var(--cs);color:var(--ts)}
+.ev-bike{background:var(--cb);color:var(--tb)}.ev-tennis{background:var(--ct);color:var(--tt)}
+.ev-boulder{background:var(--co);color:var(--to)}.ev-project{background:var(--cp);color:var(--tp)}
+.ev-home{background:var(--chm);color:var(--thm)}.ev-eat{background:var(--ce);color:var(--te)}
+.ev-partner{background:var(--cpa);color:var(--tpa)}.ev-rest{background:var(--cr);color:var(--tr)}
+.sbar{margin:12px 12px 0;background:var(--surface);border-radius:var(--r);padding:11px 12px;border:1px solid var(--border2)}
+.sbar-ttl{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.sdays{display:flex;gap:2px}
+.sday{flex:1;text-align:center}
+.sday-n{font-size:9px;color:var(--text3);font-weight:500}
+.sday-d{width:8px;height:8px;border-radius:50%;margin:4px auto 2px}
+.sday-l{font-size:8px;color:var(--text2);line-height:1.2}
+.nbar{margin:8px 12px 0;background:var(--surface);border-radius:var(--r);padding:10px 12px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.nbar-l{font-size:11px;color:var(--text2)}
+.nbar-r{font-size:11px;font-weight:600;color:var(--text)}
+
+/* SETUP BANNER */
+.setup-banner{margin:12px 12px 0;background:#FEF3C7;border-radius:var(--r);padding:12px 14px;border:1px solid #FDE68A;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.setup-banner p{font-size:12px;color:#78350F;line-height:1.5}
+.setup-banner button{flex-shrink:0;padding:7px 12px;border-radius:var(--rsm);background:#92400E;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+
+/* OVERLAY + SHEET */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.on{opacity:1;pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:18px 18px 0 0;z-index:300;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:88vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,16px)}
+.sheet.open{transform:translateY(0)}
+.sh-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 14px}
+.sh-ttl{font-size:16px;font-weight:600;padding:0 16px 14px}
+.sh-field{padding:0 16px;margin-bottom:12px}
+.sh-lbl{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.sh-inp{width:100%;border:1.5px solid var(--border2);border-radius:var(--rsm);padding:10px 12px;font-size:15px;font-family:var(--font);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s}
+.sh-inp:focus{border-color:#3B82F6}
+.cgrid{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px;margin-bottom:14px}
+.copt{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;cursor:pointer;border:1.5px solid transparent;font-size:12px;font-weight:500}
+.copt.sel{border-color:currentColor}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dgrid2{display:flex;gap:5px;padding:0 16px;margin-bottom:14px;flex-wrap:wrap}
+.dopt{padding:6px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1.5px solid var(--border2);background:var(--bg);color:var(--text2);font-weight:500;font-family:var(--font)}
+.dopt.sel{border-color:#3B82F6;background:#EFF6FF;color:#1D4ED8}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 16px;margin-bottom:16px}
+.sopt{padding:8px 10px;border-radius:var(--rsm);border:1.5px solid var(--border2);font-size:12px;cursor:pointer;background:var(--bg);text-align:center;color:var(--text2);font-family:var(--font)}
+.sopt.sel{border-color:#3B82F6;background:#EFF6FF;color:#1D4ED8}
+.sh-actions{display:flex;gap:8px;padding:4px 16px 8px}
+.btn-save{flex:1;padding:14px;border-radius:var(--r);background:#111827;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.btn-del{padding:14px 18px;border-radius:var(--r);background:#FEE2E2;color:#991B1B;border:none;font-size:15px;cursor:pointer;font-family:var(--font);font-weight:500}
+
+/* SETTINGS SHEET */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-lbl{font-size:14px;font-weight:500;color:var(--text)}
+.set-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.set-val{font-size:12px;color:var(--text2)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-green{background:#D1FAE5;color:#065F46}
+.pill-gray{background:#F3F4F6;color:#6B7280}
+.pill-yellow{background:#FEF3C7;color:#92400E}
+.set-btn{padding:8px 14px;border-radius:var(--rsm);border:1.5px solid var(--border2);background:var(--bg);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);color:var(--text)}
+.set-danger{color:#DC2626;border-color:#FECACA;background:#FEF2F2}
+.api-setup{padding:16px;display:flex;flex-direction:column;gap:10px}
+.api-hint{font-size:12px;color:var(--text2);line-height:1.6;background:var(--bg);border-radius:var(--rsm);padding:10px 12px}
+.api-hint a{color:#2563EB}
+.api-hint ol{padding-left:16px;margin-top:6px}
+.api-hint li{margin-bottom:3px}
+</style>
+</head>
+<body>
+
+<div class="hdr" id="hdr">
+  <div class="hdr-top">
+    <div class="hdr-left">
+      <h1>Wochenplan</h1>
+      <div class="hdr-meta">
+        <span id="badge-shift" class="hdr-badge"></span>
+        <span id="badge-season" class="hdr-badge"></span>
+      </div>
+      <div class="hdr-meta" id="hdr-week"></div>
+    </div>
+    <div class="hdr-icons">
+      <button class="icon-btn" id="sync-btn" onclick="manualSync()" title="Sync">
+        ☁
+        <div class="sync-dot" id="sync-dot" style="background:#4B5563"></div>
+      </button>
+      <button class="icon-btn" onclick="openSettings()">⚙</button>
+      <button class="icon-btn" onclick="openNew()">+</button>
+    </div>
+  </div>
+  <div class="toggles">
+    <button class="tog" id="tog-f"  onclick="manualShift('f')">Frühschicht</button>
+    <button class="tog" id="tog-sp" onclick="manualShift('sp')">Spätschicht</button>
+    <div class="tog-sep"></div>
+    <button class="tog" id="tog-s" onclick="manualSeason('s')">Sommer</button>
+    <button class="tog" id="tog-w" onclick="manualSeason('w')">Winter</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="main-inner">
+    <div id="hdr-spacer"></div>
+    <div class="days-hdr" id="days-hdr"></div>
+    <div class="grid">
+      <div class="tcol" id="tcol"></div>
+      <div class="dgrid" id="dgrid"></div>
+    </div>
+    <div class="sbar">
+      <div class="sbar-ttl">Sport diese Woche</div>
+      <div class="sdays" id="sdays"></div>
+    </div>
+    <div class="nbar">
+      <div class="nbar-l">Nächster Schichtwechsel</div>
+      <div class="nbar-r" id="next-change">—</div>
+    </div>
+    <div id="setup-wrap"></div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- EVENT SHEET -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sh-handle" id="sh-handle"></div>
+  <div class="sh-ttl" id="sh-ttl">Termin</div>
+  <div class="sh-field"><div class="sh-lbl">Titel</div><input class="sh-inp" id="in-title" type="text" placeholder="z. B. Schwimmen"></div>
+  <div class="sh-field"><div class="sh-lbl">Ort</div><input class="sh-inp" id="in-loc" type="text" placeholder="z. B. Hallenbad Schorndorf"></div>
+  <div class="sh-field" style="padding-bottom:0"><div class="sh-lbl">Kategorie</div></div>
+  <div class="cgrid" id="cgrid"></div>
+  <div class="sh-field" style="padding-bottom:0"><div class="sh-lbl">Tag</div></div>
+  <div class="dgrid2" id="dgrid2"></div>
+  <div class="sh-field" style="padding-bottom:0"><div class="sh-lbl">Zeitblock</div></div>
+  <div class="sgrid" id="sgrid"></div>
+  <div class="sh-actions">
+    <button class="btn-save" onclick="saveEvent()">Speichern</button>
+    <button class="btn-del" id="btn-del" style="display:none" onclick="showDelConfirm()">Löschen</button>
+  </div>
+  <div id="del-confirm" style="display:none;margin:0 16px 16px;background:#FEE2E2;border-radius:10px;padding:12px 14px">
+    <div style="font-size:13px;font-weight:600;color:#7F1D1D;margin-bottom:10px">Termin wirklich löschen?</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmDel()" style="flex:1;padding:10px;border-radius:8px;background:#991B1B;color:#fff;border:none;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer">Ja, löschen</button>
+      <button onclick="cancelDel()" style="flex:1;padding:10px;border-radius:8px;background:#fff;color:#374151;border:1.5px solid #D1D5DB;font-size:14px;font-family:var(--font);cursor:pointer">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="sheet" id="settings-sheet">
+  <div class="sh-handle" id="set-handle"></div>
+  <div class="sh-ttl">Einstellungen</div>
+
+  <div style="padding:0 16px;margin-bottom:8px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Cloud-Sync</div>
+  <div class="set-row">
+    <div><div class="set-lbl">Status</div><div class="set-sub" id="set-sub">Nicht verbunden</div></div>
+    <span class="pill" id="set-status-pill">Nicht verbunden</span>
+  </div>
+  <div class="set-row" id="set-api-row">
+    <div style="flex:1;margin-right:10px">
+      <div class="sh-lbl" style="margin-bottom:6px">JSONBin API-Key</div>
+      <input class="sh-inp" id="in-apikey" type="text" placeholder="\$2a\$10\$..." autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+
+  <div class="api-setup">
+    <div class="api-hint">
+      <strong>So erhältst du deinen kostenlosen API-Key:</strong>
+      <ol>
+        <li>Gehe zu <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> und registriere dich kostenlos</li>
+        <li>Öffne <strong>API Keys</strong> im Dashboard</li>
+        <li>Erstelle einen neuen <strong>Master Key</strong></li>
+        <li>Füge ihn oben ein und tippe auf „Verbinden"</li>
+      </ol>
+      Das kostenlose Konto reicht vollkommen aus (10.000 Anfragen/Monat).
+    </div>
+    <button class="btn-save" onclick="connectCloud()">Verbinden &amp; Sync starten</button>
+    <div id="set-msg" style="font-size:12px;color:var(--text2);text-align:center;min-height:18px"></div>
+  </div>
+
+  <div style="padding:0 16px;margin:8px 0;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Daten</div>
+  <div class="set-row">
+    <div><div class="set-lbl">Letzte Synchronisation</div><div class="set-sub" id="last-sync-label">—</div></div>
+    <button class="set-btn" onclick="manualSync()">Jetzt sync</button>
+  </div>
+  <div class="set-row">
+    <div><div class="set-lbl">Verbindung trennen</div><div class="set-sub">API-Key und Bin-ID löschen</div></div>
+    <button class="set-btn set-danger" onclick="disconnectCloud()">Trennen</button>
+  </div>
+  <div style="height:16px"></div>
+</div>
+
+<script>
+// ── CONSTANTS ──
+const DAYS=['Mo','Di','Mi','Do','Fr','Sa','So'];
+const SLOTS=[{label:'5 – 8',h:70},{label:'8 – 12',h:86},{label:'12 – 13',h:42},{label:'13 – 17',h:86},{label:'17 – 19',h:54},{label:'19 – 22',h:62}];
+const COLORS=[
+  {id:'work',label:'Arbeit',bg:'#DBEAFE',tc:'#1E3A8A'},
+  {id:'lang',label:'Portugiesisch',bg:'#FCE7F3',tc:'#831843'},
+  {id:'hiit',label:'HIIT',bg:'#EDE9FE',tc:'#4C1D95'},
+  {id:'swim',label:'Schwimmen',bg:'#D1FAE5',tc:'#064E3B'},
+  {id:'bike',label:'Fahrrad',bg:'#DCFCE7',tc:'#14532D'},
+  {id:'tennis',label:'Tennis/Padel',bg:'#FEF3C7',tc:'#78350F'},
+  {id:'boulder',label:'Bouldern',bg:'#E0E7FF',tc:'#312E81'},
+  {id:'project',label:'PC-Spiel',bg:'#FEE2E2',tc:'#7F1D1D'},
+  {id:'home',label:'Haushalt',bg:'#FEF9C3',tc:'#713F12'},
+  {id:'eat',label:'Kochen/Essen',bg:'#F3F4F6',tc:'#1F2937'},
+  {id:'partner',label:'Zeit zu zweit',bg:'#FFF1F2',tc:'#881337'},
+  {id:'rest',label:'Erholung',bg:'#F9FAFB',tc:'#374151'},
+];
+const SPORT_C={hiit:'#7C3AED',swim:'#059669',bike:'#16A34A',tennis:'#D97706',boulder:'#4338CA'};
+const BASELINE=new Date(2026,4,4);
+const JSONBIN='https://api.jsonbin.io/v3';
+
+// ── SHIFT / SEASON DETECTION ──
+function getMon(d){const x=new Date(d);const day=x.getDay()===0?6:x.getDay()-1;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x;}
+function detectShift(d){const ms=getMon(d||new Date())-BASELINE;const w=Math.round(ms/(7*24*60*60*1000));return(((w%2)+2)%2)===0?'f':'sp';}
+function detectSeason(d){const m=(d||new Date()).getMonth();return(m>=4&&m<=8)?'s':'w';}
+function nextShiftDate(){const n=getMon(new Date());n.setDate(n.getDate()+7);return n;}
+function fmtDate(d){const ds=['So','Mo','Di','Mi','Do','Fr','Sa'];return`${ds[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.`;}
+function fmtWeek(){const now=new Date();const mon=getMon(now);const sun=new Date(mon);sun.setDate(mon.getDate()+6);const f=d=>`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;const jan4=new Date(now.getFullYear(),0,4);const kw=Math.round((getMon(now)-getMon(jan4))/(7*24*60*60*1000))+1;return`KW ${kw} · ${f(mon)} – ${f(sun)}`;}
+
+// ── DEFAULT DATA ──
+function genDefaults(season,shift){
+  const s=season,sh=shift;let n=1;const ev=[];
+  const add=(title,loc,day,slot,color)=>ev.push({id:`${s}_${sh}_${n++}`,title,loc,day,slot,color});
+  add('Portugiesisch','Zuhause',0,0,'lang');add('HIIT 30 min','Zuhause',0,0,'hiit');
+  add('Arbeit','Homeoffice',0,1,'work');add('Kochen + Pause','Zuhause',0,2,'eat');
+  add('Arbeit','Homeoffice',0,3,'work');
+  add(sh==='sp'?'PC-Spiel':'Zeit zu zweit',sh==='sp'?'Zuhause':'',0,4,sh==='sp'?'project':'partner');
+  add('Portugiesisch','Zuhause',1,0,'lang');add('Fahrrad zur Arbeit','12 km · 200 Hm',1,0,'bike');
+  add('Arbeit','Büro',1,1,'work');add('Kochen + Pause','Büro',1,2,'eat');
+  add('Arbeit + Fahrrad heim','12 km zurück',1,3,'work');add('Zeit zu zweit','',1,4,'partner');
+  add('Portugiesisch','Zuhause',2,0,'lang');
+  add(s==='w'?'Schwimmen 6:30':'Schwimmen',s==='w'?'Hallenbad':'Freibad',2,0,'swim');
+  add('Arbeit','Homeoffice',2,1,'work');add('Kochen + Pause','Zuhause',2,2,'eat');
+  add('Arbeit','Homeoffice',2,3,'work');
+  add(sh==='sp'&&s==='s'?'Tennis':'Zeit zu zweit',sh==='sp'&&s==='s'?'Betriebssport':'',2,4,sh==='sp'&&s==='s'?'tennis':'partner');
+  add('Portugiesisch','Zuhause',3,0,'lang');add('HIIT 30 min','Zuhause',3,0,'hiit');
+  add('Arbeit','Homeoffice',3,1,'work');add('Kochen + Pause','Zuhause',3,2,'eat');
+  add('Arbeit','Homeoffice',3,3,'work');
+  add(sh==='sp'?'PC-Spiel':'Zeit zu zweit',sh==='sp'?'Zuhause':'',3,4,sh==='sp'?'project':'partner');
+  add('Portugiesisch','Zuhause',4,0,'lang');add('Arbeit','Homeoffice',4,1,'work');
+  add('Kochen + Pause','Zuhause',4,2,'eat');add('Putzen','Zuhause',4,3,'home');
+  add(sh==='f'&&s==='w'?'PC-Spiel':'Flex / Erholung',sh==='f'&&s==='w'?'Zuhause':'',4,4,sh==='f'&&s==='w'?'project':'rest');
+  add('Bouldern','Boulderhalle',5,0,'boulder');
+  if(s==='w')add('Padel','Paddelhalle',5,0,'tennis');
+  add('Einkaufen','Supermarkt',5,2,'home');add('Zeit zu zweit','',5,4,'partner');
+  add(sh==='f'?'Ausschlafen':'Gemeinsam frühstücken','Zuhause',6,0,'rest');
+  add('Kochen','Zuhause',6,2,'eat');add('Zeit zu zweit','',6,4,'partner');
+  return ev;
+}
+
+// ── STATE ──
+const KEYS=['s_f','s_sp','w_f','w_sp'];
+let stores={};
+let curSeason,curShift;
+let selColor='work',selDay=0,selSlot=0,editId=null;
+let manualOverride={season:null,shift:null};
+let isSyncing=false;
+
+function storeKey(){return`${curSeason}_${curShift}`;}
+function evs(){return stores[storeKey()];}
+
+function loadLocal(){
+  KEYS.forEach(k=>{
+    try{const r=localStorage.getItem('wp4_'+k);stores[k]=r?JSON.parse(r):genDefaults(k[0],k.slice(2));}
+    catch(e){stores[k]=genDefaults(k[0],k.slice(2));}
+  });
+}
+function saveLocal(){
+  KEYS.forEach(k=>{try{localStorage.setItem('wp4_'+k,JSON.stringify(stores[k]));}catch(e){}});
+}
+
+// ── CLOUD SYNC ──
+function getKey(){return localStorage.getItem('wp_apikey')||'';}
+function getBinId(){return localStorage.getItem('wp_binid')||'';}
+function setLastSync(){const now=new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});localStorage.setItem('wp_lastsync',now);updateSyncLabel();}
+function updateSyncLabel(){const v=localStorage.getItem('wp_lastsync');document.getElementById('last-sync-label').textContent=v||'—';}
+
+function setSyncDot(state){
+  const d=document.getElementById('sync-dot');
+  d.style.background=state==='ok'?'#10B981':state==='err'?'#EF4444':state==='busy'?'#F59E0B':'#4B5563';
+}
+
+async function connectCloud(){
+  const key=document.getElementById('in-apikey').value.trim();
+  if(!key){setMsg('Bitte API-Key eingeben.');return;}
+  setMsg('Verbinde…');
+  try{
+    const payload={stores};
+    const res=await fetch(`${JSONBIN}/b`,{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Private':'true','X-Bin-Name':'Wochenplan'},body:JSON.stringify(payload)});
+    if(!res.ok){const t=await res.text();setMsg('Fehler: '+res.status+' – API-Key prüfen.');return;}
+    const data=await res.json();
+    const binId=data.metadata.id;
+    localStorage.setItem('wp_apikey',key);
+    localStorage.setItem('wp_binid',binId);
+    setLastSync();
+    setSyncDot('ok');
+    setMsg('✓ Verbunden! Bin-ID: '+binId);
+    updateSettingsStatus();
+  }catch(e){setMsg('Netzwerkfehler – bitte prüfen ob du online bist.');}
+}
+
+async function cloudPush(){
+  const key=getKey(),binId=getBinId();
+  if(!key||!binId)return;
+  if(isSyncing)return;
+  isSyncing=true;setSyncDot('busy');
+  try{
+    const res=await fetch(`${JSONBIN}/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':key},body:JSON.stringify({stores})});
+    if(res.ok){setLastSync();setSyncDot('ok');}
+    else setSyncDot('err');
+  }catch(e){setSyncDot('err');}
+  isSyncing=false;
+}
+
+async function cloudPull(){
+  const key=getKey(),binId=getBinId();
+  if(!key||!binId)return false;
+  setSyncDot('busy');
+  try{
+    const res=await fetch(`${JSONBIN}/b/${binId}/latest`,{headers:{'X-Master-Key':key}});
+    if(!res.ok){setSyncDot('err');return false;}
+    const data=await res.json();
+    if(data.record&&data.record.stores){
+      stores=data.record.stores;
+      KEYS.forEach(k=>{if(!stores[k])stores[k]=genDefaults(k[0],k.slice(2));});
+      saveLocal();
+      setLastSync();setSyncDot('ok');
+      return true;
+    }
+  }catch(e){setSyncDot('err');}
+  return false;
+}
+
+async function manualSync(){
+  if(!getKey()){openSettings();return;}
+  const pulled=await cloudPull();
+  if(pulled)render();
+}
+
+function disconnectCloud(){
+  localStorage.removeItem('wp_apikey');
+  localStorage.removeItem('wp_binid');
+  setSyncDot('off');
+  updateSettingsStatus();
+  setMsg('Verbindung getrennt.');
+}
+
+function setMsg(t){document.getElementById('set-msg').textContent=t;}
+
+function updateSettingsStatus(){
+  const connected=!!(getKey()&&getBinId());
+  const pill=document.getElementById('set-status-pill');
+  const sub=document.getElementById('set-sub');
+  if(connected){
+    pill.className='pill pill-green';pill.textContent='✓ Verbunden';
+    sub.textContent='Sync aktiv – Bin-ID: '+getBinId().slice(-6)+'…';
+    setSyncDot('ok');
+  }else{
+    pill.className='pill pill-gray';pill.textContent='Nicht verbunden';
+    sub.textContent='Keine Cloud-Verbindung';
+    setSyncDot('off');
+  }
+  if(getKey())document.getElementById('in-apikey').value=getKey();
+  updateSyncLabel();
+}
+
+function showSetupBanner(){
+  const w=document.getElementById('setup-wrap');
+  if(getKey()){w.innerHTML='';return;}
+  w.innerHTML=`<div class="setup-banner"><p>☁ Cloud-Sync noch nicht eingerichtet. Termine werden nur lokal gespeichert.</p><button onclick="openSettings()">Einrichten</button></div>`;
+}
+
+// ── TOGGLES ──
+function applyState(){
+  curSeason=manualOverride.season||detectSeason();
+  curShift=manualOverride.shift||detectShift();
+  updateToggles();updateHeader();render();
+}
+function manualShift(sh){manualOverride.shift=manualOverride.shift===sh?null:sh;applyState();}
+function manualSeason(s){manualOverride.season=manualOverride.season===s?null:s;applyState();}
+function updateToggles(){
+  document.getElementById('tog-f').classList.toggle('on',curShift==='f');
+  document.getElementById('tog-sp').classList.toggle('on',curShift==='sp');
+  document.getElementById('tog-s').classList.toggle('on',curSeason==='s');
+  document.getElementById('tog-w').classList.toggle('on',curSeason==='w');
+}
+function updateHeader(){
+  const sl=curShift==='f'?'Frühschicht':'Spätschicht';
+  const sea=curSeason==='s'?'Sommer':'Winter';
+  const bs=document.getElementById('badge-shift');
+  bs.textContent=sl+(manualOverride.shift?'':' (auto)');
+  bs.className='hdr-badge '+(curShift==='f'?'frueh':'spaet');
+  const bsea=document.getElementById('badge-season');
+  bsea.textContent=sea+(manualOverride.season?'':' (auto)');
+  bsea.className='hdr-badge';
+  document.getElementById('hdr-week').textContent=fmtWeek();
+  const next=nextShiftDate();
+  document.getElementById('next-change').textContent=fmtDate(next)+' → '+(curShift==='f'?'Spätschicht':'Frühschicht');
+}
+
+// ── RENDER ──
+function adjustSpacer(){const h=document.getElementById('hdr').offsetHeight;document.getElementById('hdr-spacer').style.height=h+'px';document.getElementById('days-hdr').style.top=h+'px';}
+function render(){renderDaysHdr();renderTcol();renderDgrid();renderSport();adjustSpacer();}
+function renderDaysHdr(){
+  const today=new Date();const ti=today.getDay()===0?6:today.getDay()-1;const mon=getMon(today);
+  const c=document.getElementById('days-hdr');c.innerHTML='<div style="flex:0 0 48px"></div>';
+  DAYS.forEach((d,i)=>{const dt=new Date(mon);dt.setDate(mon.getDate()+i);const div=document.createElement('div');div.className='dhcol'+(i===ti?' today':'');div.innerHTML=`<div class="dn">${d}</div><div class="dd">${dt.getDate()}</div>`;c.appendChild(div);});
+}
+function renderTcol(){const tc=document.getElementById('tcol');tc.innerHTML='';SLOTS.forEach(s=>{const d=document.createElement('div');d.className='tlabel';d.style.height=s.h+'px';d.textContent=s.label;tc.appendChild(d);});}
+function renderDgrid(){
+  const dg=document.getElementById('dgrid');dg.innerHTML='';const e=evs();
+  DAYS.forEach((_,di)=>{
+    const col=document.createElement('div');col.className='dcol';
+    SLOTS.forEach((s,si)=>{
+      const slot=document.createElement('div');slot.className='slot';slot.style.height=s.h+'px';
+      slot.onclick=ev=>{if(ev.target===slot)openNew(di,si);};
+      e.filter(ev=>ev.day===di&&ev.slot===si).forEach(ev=>{
+        const card=document.createElement('div');card.className='ev ev-'+ev.color;
+        card.innerHTML=`<div class="ev-t">${ev.title}</div>${ev.loc?`<div class="ev-l">📍 ${ev.loc}</div>`:''}`;
+        card.onclick=ex=>{ex.stopPropagation();openEdit(ev.id);};slot.appendChild(card);
+      });
+      col.appendChild(slot);
+    });
+    dg.appendChild(col);
+  });
+}
+function renderSport(){
+  const sm=Array(7).fill('—');const dc=Array(7).fill('#D1D5DB');
+  evs().forEach(ev=>{if(SPORT_C[ev.color]){if(sm[ev.day]==='—')sm[ev.day]=ev.title.split(' ')[0];else sm[ev.day]='2x';dc[ev.day]=SPORT_C[ev.color];}});
+  const c=document.getElementById('sdays');c.innerHTML='';
+  DAYS.forEach((d,i)=>{const div=document.createElement('div');div.className='sday';div.innerHTML=`<div class="sday-n">${d}</div><div class="sday-d" style="background:${dc[i]}"></div><div class="sday-l">${sm[i]}</div>`;c.appendChild(div);});
+}
+
+// ── EVENT SHEET ──
+function buildSheet(){
+  const cg=document.getElementById('cgrid');cg.innerHTML='';
+  COLORS.forEach(c=>{const d=document.createElement('div');d.className='copt';d.id='col-'+c.id;d.style.background=c.bg;d.style.color=c.tc;d.innerHTML=`<div class="cdot" style="background:${c.tc}"></div>${c.label}`;d.onclick=()=>setColor(c.id);cg.appendChild(d);});
+  const dg=document.getElementById('dgrid2');dg.innerHTML='';
+  DAYS.forEach((d,i)=>{const b=document.createElement('button');b.className='dopt';b.id='day-'+i;b.textContent=d;b.onclick=()=>setDay(i);dg.appendChild(b);});
+  const sg=document.getElementById('sgrid');sg.innerHTML='';
+  SLOTS.forEach((s,i)=>{const b=document.createElement('button');b.className='sopt';b.id='slot-'+i;b.textContent=s.label;b.onclick=()=>setSlot(i);sg.appendChild(b);});
+}
+function setColor(id){selColor=id;document.querySelectorAll('.copt').forEach(e=>e.classList.remove('sel'));document.getElementById('col-'+id)?.classList.add('sel');}
+function setDay(i){selDay=i;document.querySelectorAll('.dopt').forEach(e=>e.classList.remove('sel'));document.getElementById('day-'+i)?.classList.add('sel');}
+function setSlot(i){selSlot=i;document.querySelectorAll('.sopt').forEach(e=>e.classList.remove('sel'));document.getElementById('slot-'+i)?.classList.add('sel');}
+function openEdit(id){editId=id;const ev=evs().find(e=>e.id===id);if(!ev)return;document.getElementById('sh-ttl').textContent='Termin bearbeiten';document.getElementById('in-title').value=ev.title;document.getElementById('in-loc').value=ev.loc||'';document.getElementById('btn-del').style.display='';setColor(ev.color);setDay(ev.day);setSlot(ev.slot);showSheet('sheet');}
+function openNew(day,slot){editId=null;document.getElementById('sh-ttl').textContent='Neuer Termin';document.getElementById('in-title').value='';document.getElementById('in-loc').value='';document.getElementById('btn-del').style.display='none';setColor('work');setDay(day!==undefined?day:0);setSlot(slot!==undefined?slot:0);showSheet('sheet');}
+function showDelConfirm(){document.getElementById('del-confirm').style.display='block';document.getElementById('btn-del').style.display='none';}
+function cancelDel(){document.getElementById('del-confirm').style.display='none';document.getElementById('btn-del').style.display='';}
+function confirmDel(){if(!editId)return;stores[storeKey()]=stores[storeKey()].filter(e=>e.id!==editId);saveLocal();cloudPush();render();closeSheet();}
+async function saveEvent(){
+  const title=document.getElementById('in-title').value.trim();if(!title){document.getElementById('in-title').focus();return;}
+  const loc=document.getElementById('in-loc').value.trim();const e=stores[storeKey()];
+  if(editId){const ev=e.find(x=>x.id===editId);if(ev){ev.title=title;ev.loc=loc;ev.color=selColor;ev.day=selDay;ev.slot=selSlot;}}
+  else e.push({id:'u'+Date.now(),title,loc,day:selDay,slot:selSlot,color:selColor});
+  saveLocal();await cloudPush();render();closeSheet();
+}
+function openSettings(){showSheet('settings-sheet');updateSettingsStatus();}
+function showSheet(id){document.getElementById('overlay').classList.add('on');document.getElementById(id).classList.add('open');}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('settings-sheet').classList.remove('open');
+  document.getElementById('del-confirm').style.display='none';
+  if(editId)document.getElementById('btn-del').style.display='';
+}
+
+// Swipe to close both sheets
+function addSwipe(handleId,sheetId){
+  let sy=0;const sh=document.getElementById(sheetId);
+  document.getElementById(handleId).addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
+  document.getElementById(handleId).addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-sy;if(dy>0)sh.style.transform=`translateY(${dy}px)`;},{passive:true});
+  document.getElementById(handleId).addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-sy;sh.style.transform='';if(dy>70)closeSheet();});
+}
+addSwipe('sh-handle','sheet');
+addSwipe('set-handle','settings-sheet');
+
+// ── INIT ──
+loadLocal();
+buildSheet();
+applyState();
+showSetupBanner();
+updateSettingsStatus();
+if(getKey()&&getBinId()){cloudPull().then(pulled=>{if(pulled)render();});}
+window.addEventListener('resize',adjustSpacer);
+</script>
+</body>
+</html>
